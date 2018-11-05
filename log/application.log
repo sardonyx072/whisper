@@ -1,2 +1,10 @@
 2018-10-31 00:23:13 [main] INFO :: Shared secret is a match
 2018-10-31 00:27:03 [main] INFO :: Shared secret is a match
+2018-10-31 00:35:56 [main] INFO :: Shared secret is a match
+2018-11-04 16:45:14 [main] INFO :: Shared secret is a match
+2018-11-04 17:01:37 [main] INFO :: Shared secret is a match
+2018-11-04 17:01:37 [main] INFO :: Plaintext is a match
+2018-11-04 17:03:26 [main] INFO :: Shared secret is a match
+2018-11-04 17:03:26 [main] INFO :: Plaintext is a match
+2018-11-04 19:54:41 [main] INFO :: The messages do match
+2018-11-04 19:54:41 [main] INFO :: The signature verification PASSES
