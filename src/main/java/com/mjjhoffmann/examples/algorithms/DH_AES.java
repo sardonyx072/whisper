@@ -1,4 +1,4 @@
-package examples;
+package com.mjjhoffmann.examples.algorithms;
 
 import java.io.IOException;
 import java.security.AlgorithmParameters;

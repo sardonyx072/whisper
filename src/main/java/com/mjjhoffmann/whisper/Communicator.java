@@ -1,3 +1,4 @@
+package com.mjjhoffmann.whisper;
 
 public abstract class Communicator {
 	

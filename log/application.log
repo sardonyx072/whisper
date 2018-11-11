@@ -8,3 +8,9 @@
 2018-11-04 17:03:26 [main] INFO :: Plaintext is a match
 2018-11-04 19:54:41 [main] INFO :: The messages do match
 2018-11-04 19:54:41 [main] INFO :: The signature verification PASSES
+2018-11-11 15:35:24 [main] INFO :: Made it to client runner!
+2018-11-11 15:35:33 [main] INFO :: Shared secret is a match
+2018-11-11 15:35:33 [main] INFO :: Plaintext is a match
+2018-11-11 15:37:12 [main] INFO :: Reading launch configuration...
+2018-11-11 15:37:12 [main] INFO :: Shared secret is a match
+2018-11-11 15:37:12 [main] INFO :: Plaintext is a match

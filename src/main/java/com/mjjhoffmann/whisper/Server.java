@@ -1,3 +1,4 @@
+package com.mjjhoffmann.whisper;
 
 import java.util.HashSet;
 
