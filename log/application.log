@@ -1,16 +1,43 @@
-2018-10-31 00:23:13 [main] INFO :: Shared secret is a match
-2018-10-31 00:27:03 [main] INFO :: Shared secret is a match
-2018-10-31 00:35:56 [main] INFO :: Shared secret is a match
-2018-11-04 16:45:14 [main] INFO :: Shared secret is a match
-2018-11-04 17:01:37 [main] INFO :: Shared secret is a match
-2018-11-04 17:01:37 [main] INFO :: Plaintext is a match
-2018-11-04 17:03:26 [main] INFO :: Shared secret is a match
-2018-11-04 17:03:26 [main] INFO :: Plaintext is a match
-2018-11-04 19:54:41 [main] INFO :: The messages do match
-2018-11-04 19:54:41 [main] INFO :: The signature verification PASSES
-2018-11-11 15:35:24 [main] INFO :: Made it to client runner!
-2018-11-11 15:35:33 [main] INFO :: Shared secret is a match
-2018-11-11 15:35:33 [main] INFO :: Plaintext is a match
-2018-11-11 15:37:12 [main] INFO :: Reading launch configuration...
-2018-11-11 15:37:12 [main] INFO :: Shared secret is a match
-2018-11-11 15:37:12 [main] INFO :: Plaintext is a match
+2018-11-11 19:48:18 [main] INFO :: Reading launch configuration...
+2018-11-11 19:48:18 [Thread-0] DEBUG:: waiting for client connection
+2018-11-11 19:48:38 [main] INFO :: Reading launch configuration...
+2018-11-11 19:48:38 [main] INFO :: Establishing connection...
+2018-11-11 19:48:38 [main] INFO :: Connected: Socket[addr=/127.0.0.1,port=8083,localport=49850]
+2018-11-11 19:48:38 [Thread-0] DEBUG:: client accepted: Socket[addr=/127.0.0.1,port=49850,localport=8083]
+2018-11-11 19:48:38 [Thread-0] DEBUG:: waiting for client connection
+2018-11-11 19:48:38 [Thread-1] DEBUG:: Server thread 49850 is running
+2018-11-11 19:48:42 [Thread-0] INFO :: 49850: hello
+2018-11-11 19:48:46 [main] INFO :: Reading launch configuration...
+2018-11-11 19:48:47 [main] INFO :: Establishing connection...
+2018-11-11 19:48:47 [main] INFO :: Connected: Socket[addr=/127.0.0.1,port=8083,localport=49871]
+2018-11-11 19:48:47 [Thread-0] DEBUG:: client accepted: Socket[addr=/127.0.0.1,port=49871,localport=8083]
+2018-11-11 19:48:47 [Thread-0] DEBUG:: waiting for client connection
+2018-11-11 19:48:47 [Thread-2] DEBUG:: Server thread 49871 is running
+2018-11-11 19:48:50 [Thread-0] INFO :: 49871: hello there
+2018-11-11 19:48:50 [Thread-0] INFO :: 49871: hello there
+2018-11-11 19:48:54 [Thread-0] INFO :: 49871: how are you
+2018-11-11 19:48:54 [Thread-0] INFO :: 49871: how are you
+2018-11-11 19:49:05 [Thread-0] INFO :: 49871: what's good?
+2018-11-11 19:49:05 [Thread-0] INFO :: 49871: what's good?
+2018-11-11 19:50:04 [Thread-0] INFO :: 49871: hello
+2018-11-11 19:50:04 [Thread-0] INFO :: 49871: hello
+2018-11-11 19:56:17 [Thread-0] INFO :: Good bye. Press RETURN to exit ...
+2018-11-11 19:56:25 [Thread-0] INFO :: Good bye. Press RETURN to exit ...
+2018-11-11 19:57:19 [main] INFO :: Reading launch configuration...
+2018-11-11 19:57:19 [Thread-0] DEBUG:: waiting for client connection
+2018-11-11 19:57:28 [main] INFO :: Reading launch configuration...
+2018-11-11 19:57:28 [main] INFO :: Establishing connection...
+2018-11-11 19:57:28 [main] INFO :: Connected: Socket[addr=/127.0.0.1,port=8083,localport=51007]
+2018-11-11 19:57:28 [Thread-0] DEBUG:: client accepted: Socket[addr=/127.0.0.1,port=51007,localport=8083]
+2018-11-11 19:57:28 [Thread-0] DEBUG:: waiting for client connection
+2018-11-11 19:57:28 [Thread-1] DEBUG:: Server thread 51007 is running
+2018-11-11 19:57:35 [main] INFO :: Reading launch configuration...
+2018-11-11 19:57:35 [main] INFO :: Establishing connection...
+2018-11-11 19:57:35 [main] INFO :: Connected: Socket[addr=/127.0.0.1,port=8083,localport=51024]
+2018-11-11 19:57:35 [Thread-0] DEBUG:: client accepted: Socket[addr=/127.0.0.1,port=51024,localport=8083]
+2018-11-11 19:57:35 [Thread-0] DEBUG:: waiting for client connection
+2018-11-11 19:57:35 [Thread-2] DEBUG:: Server thread 51024 is running
+2018-11-11 19:57:37 [Thread-0] INFO :: 51024: hello
+2018-11-11 19:57:37 [Thread-0] INFO :: 51024: hello
+2018-11-11 19:57:45 [Thread-0] INFO :: Good bye. Press RETURN to exit ...
+2018-11-11 19:57:49 [Thread-0] INFO :: Good bye. Press RETURN to exit ...

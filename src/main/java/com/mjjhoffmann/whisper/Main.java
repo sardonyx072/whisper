@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.mjjhoffmann.examples.algorithms.*;
+import com.mjjhoffmann.examples.chat.*;
 import com.mjjhoffmann.examples.date.*;
 
 public class Main {
@@ -29,12 +30,12 @@ public class Main {
 		case "DateClient":
 			DateClient.main(args);
 			break;
-		case "server":
-			ServerRunner.main(args);
+		case "ChatServer":
+			ChatServer.main(args);
 			break;
-		case "client":
+		case "ChatClient":
 		default:
-			ClientRunner.main(args);
+			ChatClient.main(args);
 			break;
 		}
 	}

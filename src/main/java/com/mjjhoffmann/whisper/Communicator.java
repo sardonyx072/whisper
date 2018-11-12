@@ -1,6 +1,6 @@
 package com.mjjhoffmann.whisper;
 
-public abstract class Communicator {
+public abstract class Communicator implements Runnable {
 	
 	private CommunicatorId id;
 	
