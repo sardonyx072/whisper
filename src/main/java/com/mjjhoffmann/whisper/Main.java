@@ -34,8 +34,19 @@ public class Main {
 			ChatServer.main(args);
 			break;
 		case "ChatClient":
-		default:
 			ChatClient.main(args);
+			break;
+		case "Server":
+			Server.main(args);
+			break;
+		case "Client":
+			Client.main(args);
+			break;
+		case "ClientGUI":
+			ClientGUI.main(args);
+			break;
+		default:
+			Client.main(args);
 			break;
 		}
 	}

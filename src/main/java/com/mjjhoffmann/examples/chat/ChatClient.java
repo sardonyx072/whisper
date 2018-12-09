@@ -9,8 +9,6 @@ import java.net.UnknownHostException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mjjhoffmann.whisper.Communicator;
-
 public class ChatClient implements Runnable {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(ChatClient.class);
