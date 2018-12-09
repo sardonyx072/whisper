@@ -12,11 +12,7 @@ import java.util.HashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mjjhoffmann.whisper.Communicator;
-import com.mjjhoffmann.whisper.CommunicatorId;
-
 public class Server implements Runnable {
-	
 	private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
 	
 	private class ClientThread extends Thread {
@@ -68,13 +64,11 @@ public class Server implements Runnable {
 	}
 
 	private HashSet<ClientThread> clientThreads;
-	private HashSet<CommunicatorId> clients;
 	private ServerSocket server;
 	private Thread thread;
 	
 	public Server (int port) {
 		this.clientThreads = new HashSet<ClientThread>();
-		this.clients = new HashSet<CommunicatorId>();
 		try {
 			this.server = new ServerSocket(port);
 			this.start();
