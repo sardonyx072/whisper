@@ -1,110 +1,179 @@
 package com.mjjhoffmann.whisper;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Client implements Runnable {
+public class Client extends JFrame {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Client.class);
 	
-	private class ClientThread extends Thread {
+	private class ServerHandler extends Thread {
 		private Socket socket;
 		private Client client;
 		private DataInputStream dis;
-		public ClientThread (Client client, Socket socket) {
+		public ServerHandler (Client client, Socket socket) {
 			this.socket = socket;
 			this.client = client;
-			this.open();
+			try {this.dis = new DataInputStream(this.socket.getInputStream());}
+			catch (IOException e) {LOGGER.error("cannot open stream! " + e.getMessage());}
 			this.start();
 		}
-		public void open() {
-			try {this.dis = new DataInputStream(socket.getInputStream());}
-			catch (IOException e) {
-				LOGGER.error("error getting input stream: " + e.getMessage());
-				this.client.stop();
-			}
-		}
 		public void close() {
-			try {if (dis != null) dis.close();}
-			catch (IOException e) {LOGGER.error("error closing input stream: " + e.getMessage());}
+			try {
+				if (this.dis != null) {
+					this.dis.close();
+					this.dis = null;
+				}
+			}
+			catch (IOException e) {LOGGER.error("cannot close socket " + e.getMessage());}
 		}
 		public void run() {
 			while (true) {
-				try {this.client.handle(dis.readUTF());}
+				try {this.client.handle(this.dis.readUTF());}
 				catch (IOException e) {
 					LOGGER.error("listening error: " + e.getMessage());
-					this.client.stop();
+					this.client.disconnect();
 				}
 			}
 		}
 	}
 	
 	private Socket socket;
-	private Thread thread;
-	private DataInputStream dis;
 	private DataOutputStream dos;
-	private ClientThread client;
-	public Client (String serverName, int serverPort) {
-		LOGGER.info("Establishing connection...");
+	private ServerHandler server;
+	private JTextArea display = new JTextArea();
+	private JScrollPane displayScrolling = new JScrollPane(display);
+	private JTextField host = new JTextField(), port = new JTextField(), name = new JTextField(), chat = new JTextField();
+	private JButton connect = new JButton("Connect");
+	public Client () {
+		super("Whisper");
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		JPanel connection = new JPanel();
+		connection.setLayout(new GridLayout(1,5));
+		connection.add(new JLabel("Host:"));
+		connection.add(this.host);
+		connection.add(new JLabel("Port:"));
+		connection.add(this.port);
+		connection.add(this.connect);
+		JPanel input = new JPanel();
+		input.setLayout(new GridLayout(1,2));
+		input.add(this.name);
+		input.add(this.chat);
+		this.chat.addKeyListener(new KeyListener() {
+			@Override
+			public void keyTyped(KeyEvent e) {}
+			@Override
+			public void keyPressed(KeyEvent e) {}
+			@Override
+			public void keyReleased(KeyEvent e) {if (e.getKeyCode() == KeyEvent.VK_ENTER) send(chat.getText());}
+		});
+		this.display.setEditable(false);
+		this.setLayout(new BorderLayout());
+		this.add("North", connection);
+		this.add("Center", this.displayScrolling);
+		this.add("South", input);
+		this.host.setText("localhost");
+		this.port.setText("4444");
+		this.connect.setBackground(Color.RED);
+		this.connect.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {toggleConnected();}
+		});
+		this.name.disable();
+		this.chat.disable();
+		this.setPreferredSize(new Dimension(750, 500));
+		this.pack();
+	}
+	public void toggleConnected() {
+		if (this.socket == null) {this.connect();}
+		else {this.send(".bye");}
+	}
+	public void connect() {
 		try {
-			this.socket = new Socket(serverName, serverPort);
+			LOGGER.info("Establishing connection...");
+			this.socket = new Socket(this.host.getText(), Integer.parseInt(this.port.getText()));
 			LOGGER.info("Connected: " + this.socket);
-			this.start();
+			this.dos = new DataOutputStream(this.socket.getOutputStream());
+			this.server = new ServerHandler(this, this.socket);
+			this.host.disable();
+			this.port.disable();
+			this.connect.setBackground(Color.GREEN);
+			this.connect.setText("Disconnect");
+			this.name.enable();
+			this.chat.enable();
+			if (this.name.getText().isEmpty()) this.name.setText("guest"+this.socket.getLocalPort());
+			this.chat.requestFocus();
 		}
 		catch (UnknownHostException e) {LOGGER.error("Unknown host: " + e.getMessage());}
+		catch (NumberFormatException e) {LOGGER.error("bad port number format: " + e.getMessage());}
 		catch (IOException e) {LOGGER.error("Unexpected exception: " + e.getMessage());}
 	}
-	public void start() throws IOException {
-		this.dis = new DataInputStream(System.in);
-		this.dos = new DataOutputStream(this.socket.getOutputStream());
-		if (this.thread == null) {
-			this.client = new ClientThread(this, this.socket);
-			this.thread = new Thread(this);
-			this.thread.start();
-		}
-	}
-	public void stop() {
-		if (this.thread != null) {
-			this.thread.stop();
-			this.thread = null;
-		}
+	public void disconnect() {
 		try {
-			if (dis != null) dis.close();
-			if (dos != null) dos.close();
-			if (socket != null) socket.close();
+			if (this.socket != null) {
+				this.dos.close();
+				this.socket.close();
+				this.dos = null;
+				this.socket = null;
+			}
+			this.host.enable();
+			this.port.enable();
+			this.connect.setBackground(Color.RED);
+			this.connect.setText("Connect");
+			this.name.disable();
+			this.chat.disable();
 		}
 		catch (IOException e) {LOGGER.error("error closing");}
-		this.client.close();
-		this.client.stop();
+		this.server.close();
+		this.server.stop();
 	}
-	public void run() {
-		while (this.thread != null) {
-			try {
-				dos.writeUTF(dis.readLine());
-				dos.flush();
-			}
-			catch (IOException e) {
-				LOGGER.error("sending error: " + e.getMessage());
-				this.stop();
-			}
+	public void send(String message) {
+		try {
+			//this.dos.writeUTF(this.name.getText() + ": " + message);
+			this.dos.writeUTF(message);
+			this.dos.flush();
+			this.chat.setText("");
+		}
+		catch (IOException e) {
+			LOGGER.error("sending error: " + e.getMessage());
+			this.disconnect();
 		}
 	}
 	public void handle(String message) {
 		if (message.equals(".bye")) {
-			System.out.println("Good bye. Press RETURN to exit ...");
-			this.stop();
+			this.disconnect();
+			this.println("[Disconnected]");
 		}
-		else System.out.println(message);
+		else this.println(message);
+	}
+	public void println(String message) {
+		this.display.append(message + "\n");
 	}
 	
 	public static void main(String[] args) {
-		Client client = null;
-		if (args.length != 2) LOGGER.error("client requires server name and port");
-		else client = new Client(args[0], Integer.parseInt(args[1]));
+		//if (args.length != 2) LOGGER.error("client requires server name and port");
+		//else new Client(args[0], Integer.parseInt(args[1]));
+		new Client().setVisible(true);
 	}
 }

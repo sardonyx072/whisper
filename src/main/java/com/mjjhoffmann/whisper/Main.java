@@ -45,6 +45,9 @@ public class Main {
 		case "ClientGUI":
 			ClientGUI.main(args);
 			break;
+		case "Server2":
+			Server2.main(args);
+			break;
 		default:
 			Client.main(args);
 			break;
