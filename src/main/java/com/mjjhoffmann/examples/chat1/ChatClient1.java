@@ -136,7 +136,8 @@ public class ChatClient1 extends Applet {
 			clientKeyAgree.doPhase(serverPublicKey, true);
 			byte[] clientSharedSecret = clientKeyAgree.generateSecret();
 			LOGGER.info("generating ciphers ...");
-			SecretKeySpec clientAesKeySpec = new SecretKeySpec(clientSharedSecret, 0, 16, "AES");
+			SecretKeySpec clientAesKeySpec = new SecretKeySpec(clientSharedSecret, 0, 32, "AES");
+			LOGGER.info("algo: " + clientAesKeySpec.getAlgorithm() + ", fmt: " + clientAesKeySpec.getFormat() + " len: " + (clientAesKeySpec.getEncoded().length*8));
 			this.encryptionCipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
 			this.encryptionCipher.init(Cipher.ENCRYPT_MODE, clientAesKeySpec);
 			this.decryptionCipher = Cipher.getInstance("AES/ECB/PKCS5Padding");

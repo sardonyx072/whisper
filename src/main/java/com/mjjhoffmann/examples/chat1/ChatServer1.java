@@ -132,7 +132,8 @@ public class ChatServer1 implements Runnable {
 					serverKeyAgree.doPhase(clientDHPublicKey, true);
 					byte[] serverSharedSecret = serverKeyAgree.generateSecret();
 					LOGGER.info("generating ciphers and starting client handler ...");
-					SecretKeySpec serverAesKeySpec = new SecretKeySpec(serverSharedSecret, 0, 16, "AES");
+					SecretKeySpec serverAesKeySpec = new SecretKeySpec(serverSharedSecret, 0, 32, "AES");
+					LOGGER.info("algo: " + serverAesKeySpec.getAlgorithm() + ", fmt: " + serverAesKeySpec.getFormat() + " len: " + (serverAesKeySpec.getEncoded().length*8));
 					this.clients[this.clientCount] = new ChatServer1Thread(this, socket, serverAesKeySpec);
 					this.clients[this.clientCount].open();
 					this.clients[this.clientCount].start();
