@@ -5,7 +5,6 @@ import java.io.*;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 import javax.crypto.*;
@@ -14,7 +13,11 @@ import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.DHPublicKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ChatServer1 implements Runnable {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ChatServer1.class);
 	private class ChatServer1Thread extends Thread {
 		private ChatServer1 server = null;
 		private Socket socket = null;
@@ -38,33 +41,31 @@ public class ChatServer1 implements Runnable {
 				this.dos.flush();
 			}
 			catch (IOException e) {
-				System.out.println("cannot send on port " + this.port + ": " + e.getMessage());
+				LOGGER.error("cannot send on port " + this.port + ": " + e.getMessage());
 				this.server.remove(this.port);
 			} catch (IllegalBlockSizeException e) {
-				System.out.println("cannot encrpyt on port " + this.port + ": " + e.getMessage());
+				LOGGER.error("cannot encrpyt on port " + this.port + ": " + e.getMessage());
 				this.server.remove(this.port);
 			} catch (BadPaddingException e) {
-				System.out.println("cannot encode on port " + this.port + ": " + e.getMessage());
+				LOGGER.error("cannot encode on port " + this.port + ": " + e.getMessage());
 				this.server.remove(this.port);
 			}
 		}
 		public int getPort() {return this.port;}
 		public void run() {
-			System.out.println("Server listening to client on port " + this.port + "...");
+			LOGGER.info("Server listening to client on port " + this.port + "...");
 			while (true) {
-				try {
-					this.server.handle(this.port, new String(this.decryptionCipher.doFinal(Base64.getDecoder().decode(this.dis.readUTF()))));
-				}
+				try {this.server.handle(this.port, new String(this.decryptionCipher.doFinal(Base64.getDecoder().decode(this.dis.readUTF()))));}
 				catch (IOException e) {
-					System.out.println("cannot read on port " + this.port + ": " + e.getMessage());
+					LOGGER.error("cannot read on port " + this.port + ": " + e.getMessage());
 					this.server.remove(this.port);
 					this.stop();
 				} catch (IllegalBlockSizeException e) {
-					System.out.println("cannot decrypt on port " + this.port + ": " + e.getMessage());
+					LOGGER.error("cannot decrypt on port " + this.port + ": " + e.getMessage());
 					this.server.remove(this.port);
 					this.stop();
 				} catch (BadPaddingException e) {
-					System.out.println("cannot decode on port " + this.port + ": " + e.getMessage());
+					LOGGER.error("cannot decode on port " + this.port + ": " + e.getMessage());
 					this.server.remove(this.port);
 					this.stop();
 				}
@@ -88,21 +89,18 @@ public class ChatServer1 implements Runnable {
 	public ChatServer1 (int port) {
 		try {
 			this.server = new ServerSocket(port);
-			System.out.println("server started: " + this.server);
+			LOGGER.info("server started: " + this.server);
 			this.start();
 		}
-		catch (IOException e) {
-			System.out.println("cannot bind on port " + port + ": " + e.getMessage());
-		}
+		catch (IOException e) {LOGGER.error("cannot bind on port " + port + ": " + e.getMessage());}
 	}
 	public void run() {
-		System.out.println("generating DH keys");
+		LOGGER.info("generating DH keys");
 		KeyPairGenerator serverKeyGen = null;
 		KeyAgreement serverKeyAgree = null;
 		KeyFactory serverKeyFactory = null;
 		KeyPair serverKeyPair = null;
 		DHParameterSpec sharedDHParams = null;
-		X509EncodedKeySpec serverKeySpec = null;
 		try {
 			serverKeyGen = KeyPairGenerator.getInstance("DH");
 			serverKeyAgree = KeyAgreement.getInstance("DH");
@@ -111,64 +109,57 @@ public class ChatServer1 implements Runnable {
 			serverKeyPair = serverKeyGen.generateKeyPair();
 			serverKeyAgree.init(serverKeyPair.getPrivate());
 			sharedDHParams = ((DHPublicKey)serverKeyPair.getPublic()).getParams();
-			serverKeySpec = new X509EncodedKeySpec(serverKeyPair.getPublic().getEncoded());
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		} catch (InvalidKeyException e) {
-			e.printStackTrace();
 		}
+		catch (NoSuchAlgorithmException e) {LOGGER.error("cannot initialize keys: " + e.getMessage());}
+		catch (InvalidKeyException e) {LOGGER.error("cannotstart key agreement: " + e.getMessage());}
 		while (this.thread != null) {
 			try {
-				System.out.println("waiting for a client ...");
+				LOGGER.info("waiting for a client ...");
 				Socket socket = this.server.accept();
 				if (this.clientCount < this.clients.length) {
-					System.out.println("accepted client: " + socket);
+					LOGGER.info("accepted client: " + socket);
 					ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 					ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-					System.out.println("transferring DH public key spec ...");
+					LOGGER.info("transferring DH public key spec ...");
 					oos.writeObject(((DHPublicKey)serverKeyPair.getPublic()).getY());
 					oos.writeObject(sharedDHParams.getP());
 					oos.writeObject(sharedDHParams.getG());
 					oos.flush();
-					System.out.println("receiving client public key ...");
+					LOGGER.info("receiving client public key ...");
 					DHPublicKeySpec clientDHPublicKeySpec =  new DHPublicKeySpec((BigInteger)ois.readObject(), (BigInteger)ois.readObject(), (BigInteger)ois.readObject());
 					DHPublicKey clientDHPublicKey = (DHPublicKey)serverKeyFactory.generatePublic(clientDHPublicKeySpec);
-					System.out.println("finishing secret agreement ...");
+					LOGGER.info("finishing secret agreement ...");
 					serverKeyAgree.doPhase(clientDHPublicKey, true);
 					byte[] serverSharedSecret = serverKeyAgree.generateSecret();
-					//serverSharedSecret = MessageDigest.getInstance("SHA-256").digest(serverSharedSecret);
-					//byte[] symmetricKey = Arrays.copyOf(serverSharedSecret, 16);
-					//byte[] macKey = Arrays.copyOfRange(serverSharedSecret, 16, 32);
-					System.out.println("generating ciphers and starting client handler ...");
+					LOGGER.info("generating ciphers and starting client handler ...");
 					SecretKeySpec serverAesKeySpec = new SecretKeySpec(serverSharedSecret, 0, 16, "AES");
 					this.clients[this.clientCount] = new ChatServer1Thread(this, socket, serverAesKeySpec);
 					this.clients[this.clientCount].open();
 					this.clients[this.clientCount].start();
 					this.clientCount++;
 				}
-				else
-					System.out.println("client refused: maximum (" + this.clients.length + ") clients reached.");
+				else LOGGER.warn("client refused: maximum (" + this.clients.length + ") clients reached.");
 			}
 			catch (IOException e) {
-				System.out.println("cannot accept client: " + e.getMessage());
+				LOGGER.error("cannot accept client: " + e.getMessage());
 				this.stop();
 			} catch (IllegalStateException e) {
-				System.out.println("cannot perform key agreement: " + e.getMessage());
+				LOGGER.error("cannot perform key agreement: " + e.getMessage());
 				this.stop();
 			} catch (ClassNotFoundException e) {
-				System.out.println("cannot read client public key params: " + e.getMessage());
+				LOGGER.error("cannot read client public key params: " + e.getMessage());
 				this.stop();
 			} catch (InvalidKeySpecException e) {
-				System.out.println("cannot generate client public key from params: " + e.getMessage());
+				LOGGER.error("cannot generate client public key from params: " + e.getMessage());
 				this.stop();
 			} catch (InvalidKeyException e) {
-				System.out.println("cannot perform key agreement with client public key: " + e.getMessage());
+				LOGGER.error("cannot perform key agreement with client public key: " + e.getMessage());
 				this.stop();
 			} catch (NoSuchAlgorithmException e) {
-				System.out.println("cannot digest shared secret: " + e.getMessage());
+				LOGGER.error("cannot digest shared secret: " + e.getMessage());
 				this.stop();
 			} catch (NoSuchPaddingException e) {
-				System.out.println("cannot create ciphers for client: " + e.getMessage());
+				LOGGER.error("cannot create ciphers for client: " + e.getMessage());
 				this.stop();
 			}
 		}
@@ -203,7 +194,7 @@ public class ChatServer1 implements Runnable {
 	public synchronized void remove(int port) {
 		int pos = this.findClient(port);
 		if (pos >= 0) {
-			System.out.println("terminating connection with client on port " + port);
+			LOGGER.info("terminating connection with client on port " + port);
 			ChatServer1Thread toTerminate = this.clients[pos];
 			if (pos < this.clientCount-1)
 				for (int i = pos+1; i < this.clientCount; i++)
@@ -213,15 +204,14 @@ public class ChatServer1 implements Runnable {
 				toTerminate.close();
 			}
 			catch (IOException e) {
-				System.out.println("cannot terminate thread");
+				LOGGER.error("cannot terminate thread");
 			}
 			toTerminate.stop();
 		}
 	}
 	
 	public static void main(String[] args) {
-		ChatServer1 server = null;
 		if (args.length != 1) new ChatServer1(4444);
-		else server = new ChatServer1(Integer.parseInt(args[0]));
+		else new ChatServer1(Integer.parseInt(args[0]));
 	}
 }
