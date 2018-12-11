@@ -1,8 +1,24 @@
 package com.mjjhoffmann.examples.chat1;
 
 import java.net.*;
+import java.security.*;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
+import java.util.Base64;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyAgreement;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.interfaces.DHPublicKey;
+import javax.crypto.spec.DHParameterSpec;
+import javax.crypto.spec.DHPublicKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
 import java.io.*;
+import java.math.BigInteger;
 import java.applet.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -58,6 +74,7 @@ public class ChatClient1 extends Applet {
 	private Button send = new Button("Send"), connect = new Button("Connect"), quit = new Button("Bye");
 	private String serverName = "localhost";
 	private int serverPort = 4444;
+	private Cipher encryptionCipher = null, decryptionCipher = null;
 	public void init() {
 		Panel keys = new Panel();
 		keys.setLayout(new GridLayout(1,2));
@@ -104,6 +121,35 @@ public class ChatClient1 extends Applet {
 		try {
 			this.socket = new Socket(serverName, serverPort);
 			this.println("connected: " + this.socket);
+			ObjectInputStream ois = new ObjectInputStream(this.socket.getInputStream());
+			ObjectOutputStream oos = new ObjectOutputStream(this.socket.getOutputStream());
+			KeyPairGenerator clientKeyGen = KeyPairGenerator.getInstance("DH");
+			KeyAgreement clientKeyAgree = KeyAgreement.getInstance("DH");
+			KeyFactory clientKeyFactory = KeyFactory.getInstance("DH");
+			clientKeyGen.initialize(2048);
+			KeyPair clientKeyPair = clientKeyGen.generateKeyPair();
+			DHParameterSpec sharedDHParams = ((DHPublicKey)clientKeyPair.getPublic()).getParams();
+			clientKeyAgree.init(clientKeyPair.getPrivate());
+			this.println("receiving DH shared params ...");
+			DHPublicKeySpec serverDHPublicKeySpec = new DHPublicKeySpec((BigInteger)ois.readObject(), (BigInteger)ois.readObject(), (BigInteger)ois.readObject());
+			DHPublicKey serverPublicKey = (DHPublicKey)clientKeyFactory.generatePublic(serverDHPublicKeySpec);
+			this.println("sending public key to server ...");
+			oos.writeObject(((DHPublicKey)clientKeyPair.getPublic()).getY());
+			oos.writeObject(sharedDHParams.getP());
+			oos.writeObject(sharedDHParams.getG());
+			oos.flush();
+			this.println("finishing shared secret agreement ...");
+			clientKeyAgree.doPhase(serverPublicKey, true);
+			byte[] clientSharedSecret = clientKeyAgree.generateSecret();
+			//clientSharedSecret = MessageDigest.getInstance("SHA-256").digest(clientSharedSecret);
+			//byte[] symmetricKey = Arrays.copyOf(clientSharedSecret, 16);
+			//byte[] macKey = Arrays.copyOfRange(clientSharedSecret, 16, 32);
+			this.println("generating ciphers ...");
+			SecretKeySpec clientAesKeySpec = new SecretKeySpec(clientSharedSecret, 0, 16, "AES");
+			this.encryptionCipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+			this.encryptionCipher.init(Cipher.ENCRYPT_MODE, clientAesKeySpec);
+			this.decryptionCipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+			this.decryptionCipher.init(Cipher.DECRYPT_MODE, clientAesKeySpec);
 			this.open();
 			this.send.enable();
 			this.connect.disable();
@@ -114,25 +160,48 @@ public class ChatClient1 extends Applet {
 		}
 		catch (IOException e) {
 			this.println("unexpected exception: " + e.getMessage());
+		} catch (ClassNotFoundException e) {
+			this.println("cannot read DH params: " + e.getMessage());
+		} catch (NoSuchAlgorithmException e) {
+			this.println("cannot use DH algorithm: " + e.getMessage());
+		} catch (InvalidKeySpecException e) {
+			this.println("cannot recover server's public key: " + e.getMessage());
+		} catch (InvalidKeyException e) {
+			this.println("cannot start key agreement: " + e.getMessage());
+		} catch (NoSuchPaddingException e) {
+			this.println("cannot create ciphers: " + e.getMessage());
 		}
 	}
 	private void send() {
 		try {
-			this.dos.writeUTF(this.input.getText());
+			this.dos.writeUTF(Base64.getEncoder().encodeToString(this.encryptionCipher.doFinal(this.input.getText().getBytes("UTF-8"))));
 			this.dos.flush();
 			this.input.setText("");
 		}
 		catch (IOException e) {
 			this.println("cannot send message: " + e.getMessage());
 			this.close();
+		} catch (IllegalBlockSizeException e) {
+			this.println("cannot encrypt message: " + e.getMessage());
+			this.close();
+		} catch (BadPaddingException e) {
+			this.println("cannot encode encrypted message: " + e.getMessage());
+			this.close();
 		}
 	}
 	public void handle(String msg) {
-		if (msg.equals(".bye")) {
-			this.println("[Disconnected]");
-			this.close();
+		try {
+			msg = new String(this.decryptionCipher.doFinal(Base64.getDecoder().decode(msg)));
+			if (msg.equals(".bye")) {
+				this.println("[Disconnected]");
+				this.close();
+			}
+			else this.println(msg);
+		} catch (IllegalBlockSizeException e) {
+			this.println("cannot decrypt message");
+		} catch (BadPaddingException e) {
+			this.println("cannot decode encrypted message");
 		}
-		else this.println(msg);
 	}
 	public void open() {
 		try {
